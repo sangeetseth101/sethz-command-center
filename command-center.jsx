@@ -1,5 +1,3 @@
-"use client";
-
 import React, { useState, useEffect } from 'react';
 import { RefreshCw, Plus, Trash2, Pencil, Loader2, CheckCircle2, Circle, X } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid } from 'recharts';
@@ -75,25 +73,17 @@ function parseJsonArray(text) {
 
 async function loadShared(key, fallback) {
     try {
-        const res = await fetch(`/api/storage?key=${encodeURIComponent(key)}`);
-        if (!res.ok) throw new Error('Load failed');
-        const data = await res.json();
-        if (!data || data.value === undefined || data.value === null) return fallback;
-        return typeof data.value === 'string' ? JSON.parse(data.value) : data.value;
-    } catch (e) {
-        console.error('Storage load failed for', key, e);
+        const r = await window.storage.get(key, true);
+        if (!r || r.value === undefined) return fallback;
+        return JSON.parse(r.value);
+    } catch {
         return fallback;
     }
 }
 
 async function saveShared(key, value) {
     try {
-        const res = await fetch('/api/storage', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ key, value: JSON.stringify(value) })
-        });
-        if (!res.ok) throw new Error('Save failed');
+        await window.storage.set(key, JSON.stringify(value), true);
         return true;
     } catch (e) {
         console.error('Storage save failed for', key, e);
@@ -407,8 +397,7 @@ export default function CommandCenter() {
         .map((p, i) => ({ ...p, _idx: i }))
         .filter((p) => p.owner === 'Common' || p.owner === author || !p.owner);
 
-    const today = todayStr();
-    const todayEmailRecord = emailLog.find((d) => d.date === today);
+    const todayEmailRecord = emailLog.find((d) => d.date === todayStr());
     const todaySent = todayEmailRecord ? todayEmailRecord.sent || 0 : 0;
     const emailGoalPct = emailGoal > 0 ? Math.min(100, Math.round((todaySent / emailGoal) * 100)) : 0;
     const totalSent = emailLog.reduce((s, d) => s + (d.sent || 0), 0);
@@ -425,7 +414,7 @@ export default function CommandCenter() {
     if (!ready) {
         return (
             <div style={{ backgroundColor: BG }} className="min-h-screen flex items-center justify-center">
-                <Loader2 className="animate-spin text-zinc-400" size={28} />
+                <Loader2 className="animate-spin" style={{ color: MUTED }} size={28} />
             </div>
         );
     }
