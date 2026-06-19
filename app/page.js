@@ -1,21 +1,35 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { RefreshCw, Plus, Trash2, Pencil, Loader2, CheckCircle2, Circle, X } from 'lucide-react';
+import { RefreshCw, Plus, Trash2, Pencil, Loader2, CheckCircle2, Circle, X, Sun, Moon } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid } from 'recharts';
 
 const ORANGE = '#E8622A';
-const ORANGE_SOFT = 'rgba(232,98,42,0.16)';
-const BG = '#15140F';
-const SURFACE = '#1C1A14';
-const BORDER = '#332F25';
-const TEXT = '#EDE9E0';
-const MUTED = '#8A8678';
-const FAINT = '#6B6759';
 const GOLD = '#C9A227';
 const WARN = '#C2785A';
 
-const OWNER_COLORS = { Sangeet: ORANGE, Shivam: GOLD, Common: MUTED };
+const THEMES = {
+    dark: {
+        bg: '#15140F',
+        surface: '#1C1A14',
+        border: '#332F25',
+        text: '#EDE9E0',
+        muted: '#8A8678',
+        faint: '#6B6759',
+        orangeSoft: 'rgba(232,98,42,0.16)'
+    },
+    light: {
+        bg: '#F9F8F6',
+        surface: '#FFFFFF',
+        border: '#E8E5DC',
+        text: '#201F1C',
+        muted: '#7E7B70',
+        faint: '#AFA99B',
+        orangeSoft: 'rgba(232,98,42,0.08)'
+    }
+};
+
+const OWNER_COLORS = { Sangeet: ORANGE, Shivam: GOLD, Common: '#8A8678' };
 
 function cycleOwner(current) {
     if (current === 'Sangeet') return 'Shivam';
@@ -101,30 +115,8 @@ async function saveShared(key, value) {
     }
 }
 
-function inputStyle(extra) {
-    return { backgroundColor: BG, color: TEXT, border: `1px solid ${BORDER}`, ...extra };
-}
-
-function Card({ eyebrow, title, action, children }) {
-    return (
-        <div className="rounded-2xl p-5 sm:p-6 border" style={{ backgroundColor: SURFACE, borderColor: BORDER }}>
-            <div className="flex items-center justify-between mb-4 gap-2">
-                <div>
-                    <div className="text-xs tracking-widest uppercase mb-1" style={{ color: ORANGE }}>
-                        {eyebrow}
-                    </div>
-                    <h2 className="text-lg font-semibold" style={{ color: TEXT }}>
-                        {title}
-                    </h2>
-                </div>
-                {action}
-            </div>
-            {children}
-        </div>
-    );
-}
-
 export default function CommandCenter() {
+    const [theme, setTheme] = useState('dark');
     const [ready, setReady] = useState(false);
     const [author, setAuthor] = useState('Sangeet');
 
@@ -162,6 +154,20 @@ export default function CommandCenter() {
     const [revDraft, setRevDraft] = useState({ date: todayStr(), amount: '', source: '' });
     const [crmDraft, setCrmDraft] = useState({ name: '', company: '', stage: 'New Lead' });
     const [ideaDraft, setIdeaDraft] = useState('');
+
+    const t = THEMES[theme] || THEMES.dark;
+
+    useEffect(() => {
+        const storedTheme = localStorage.getItem('theme');
+        if (storedTheme && THEMES[storedTheme]) {
+            setTheme(storedTheme);
+        }
+    }, []);
+
+    useEffect(() => {
+        localStorage.setItem('theme', theme);
+        document.body.style.backgroundColor = t.bg;
+    }, [theme, t]);
 
     useEffect(() => {
         (async () => {
@@ -422,59 +428,92 @@ export default function CommandCenter() {
         .slice(-14)
         .map((d) => ({ date: d.date.slice(5), sent: d.sent || 0 }));
 
+    function inputStyle(extra) {
+        return { backgroundColor: t.bg, color: t.text, border: `1px solid ${t.border}`, ...extra };
+    }
+
+    function Card({ eyebrow, title, action, children }) {
+        return (
+            <div className="rounded-2xl p-5 sm:p-6 border transition-all duration-200" style={{ backgroundColor: t.surface, borderColor: t.border }}>
+                <div className="flex items-center justify-between mb-4 gap-2">
+                    <div>
+                        <div className="text-xs tracking-widest uppercase mb-1" style={{ color: ORANGE }}>
+                            {eyebrow}
+                        </div>
+                        <h2 className="text-lg font-semibold" style={{ color: t.text }}>
+                            {title}
+                        </h2>
+                    </div>
+                    {action}
+                </div>
+                {children}
+            </div>
+        );
+    }
+
     if (!ready) {
         return (
-            <div style={{ backgroundColor: BG }} className="min-h-screen flex items-center justify-center">
+            <div style={{ backgroundColor: t.bg }} className="min-h-screen flex items-center justify-center transition-colors duration-200">
                 <Loader2 className="animate-spin text-zinc-400" size={28} />
             </div>
         );
     }
 
     return (
-        <div style={{ backgroundColor: BG, color: TEXT }} className="min-h-screen w-full font-sans">
+        <div style={{ backgroundColor: t.bg, color: t.text }} className="min-h-screen w-full font-sans transition-colors duration-200">
             <div className="max-w-5xl mx-auto px-4 py-6 sm:px-6 sm:py-8">
                 <div className="flex flex-wrap items-start justify-between gap-4 mb-2">
                     <div>
-                        <div className="text-xs tracking-widest uppercase" style={{ color: MUTED }}>
+                        <div className="text-xs tracking-widest uppercase" style={{ color: t.muted }}>
                             SETHZ.CO — SUPER SCALZ PRIVATE LIMITED
                         </div>
-                        <h1 className="text-2xl sm:text-3xl font-bold mt-1" style={{ color: TEXT }}>
+                        <h1 className="text-2xl sm:text-3xl font-bold mt-1" style={{ color: t.text }}>
                             Command Center
                         </h1>
-                        <div className="text-sm mt-1" style={{ color: FAINT }}>
+                        <div className="text-sm mt-1" style={{ color: t.faint }}>
                             One source of truth for focus, tasks, pipeline and revenue — shared with Shivam.
                         </div>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-3">
                         <button
-                            onClick={() => setAuthor('Sangeet')}
-                            className="px-3 py-1.5 rounded-full text-sm font-medium border"
-                            style={author === 'Sangeet' ? { backgroundColor: ORANGE, color: BG, borderColor: ORANGE } : { borderColor: BORDER, color: MUTED }}
+                            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                            className="p-2 rounded-full border transition-all duration-200 hover:opacity-80"
+                            style={{ borderColor: t.border, color: t.muted, backgroundColor: t.surface }}
+                            title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
                         >
-                            Sangeet
+                            {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
                         </button>
-                        <button
-                            onClick={() => setAuthor('Shivam')}
-                            className="px-3 py-1.5 rounded-full text-sm font-medium border"
-                            style={author === 'Shivam' ? { backgroundColor: ORANGE, color: BG, borderColor: ORANGE } : { borderColor: BORDER, color: MUTED }}
-                        >
-                            Shivam
-                        </button>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => setAuthor('Sangeet')}
+                                className="px-3 py-1.5 rounded-full text-sm font-medium border transition-all duration-200"
+                                style={author === 'Sangeet' ? { backgroundColor: ORANGE, color: theme === 'dark' ? '#15140F' : '#FFFFFF', borderColor: ORANGE } : { borderColor: t.border, color: t.muted, backgroundColor: t.surface }}
+                            >
+                                Sangeet
+                            </button>
+                            <button
+                                onClick={() => setAuthor('Shivam')}
+                                className="px-3 py-1.5 rounded-full text-sm font-medium border transition-all duration-200"
+                                style={author === 'Shivam' ? { backgroundColor: ORANGE, color: theme === 'dark' ? '#15140F' : '#FFFFFF', borderColor: ORANGE } : { borderColor: t.border, color: t.muted, backgroundColor: t.surface }}
+                            >
+                                Shivam
+                            </button>
+                        </div>
                     </div>
                 </div>
 
-                <div className="rounded-2xl p-5 sm:p-6 mt-5 mb-6 border" style={{ backgroundColor: SURFACE, borderColor: BORDER }}>
+                <div className="rounded-2xl p-5 sm:p-6 mt-5 mb-6 border transition-all duration-200" style={{ backgroundColor: t.surface, borderColor: t.border }}>
                     <div className="flex flex-wrap items-start justify-between gap-4 mb-4">
                         <div>
-                            <div className="text-xs tracking-widest uppercase mb-1" style={{ color: MUTED }}>
+                            <div className="text-xs tracking-widest uppercase mb-1" style={{ color: t.muted }}>
                                 Current sprint goal
                             </div>
                             {northStar.sprintGoal ? (
-                                <div className="text-base sm:text-lg" style={{ color: TEXT }}>
+                                <div className="text-base sm:text-lg" style={{ color: t.text }}>
                                     {northStar.sprintGoal}
                                 </div>
                             ) : (
-                                <div className="text-base italic" style={{ color: FAINT }}>
+                                <div className="text-base italic" style={{ color: t.faint }}>
                                     No sprint goal set yet — click Edit to set one.
                                 </div>
                             )}
@@ -482,16 +521,16 @@ export default function CommandCenter() {
                         <button
                             onClick={() => setEditingNorthStar((v) => !v)}
                             className="flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-full border flex-shrink-0"
-                            style={{ borderColor: BORDER, color: GOLD }}
+                            style={{ borderColor: t.border, color: GOLD }}
                         >
                             <Pencil size={14} /> Edit
                         </button>
                     </div>
 
                     {editingNorthStar && (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5 p-4 rounded-xl" style={{ backgroundColor: BG }}>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5 p-4 rounded-xl" style={{ backgroundColor: t.bg }}>
                             <label className="text-sm">
-                                <span className="block mb-1" style={{ color: MUTED }}>
+                                <span className="block mb-1" style={{ color: t.muted }}>
                                     Sprint goal
                                 </span>
                                 <input
@@ -503,7 +542,7 @@ export default function CommandCenter() {
                                 />
                             </label>
                             <label className="text-sm">
-                                <span className="block mb-1" style={{ color: MUTED }}>
+                                <span className="block mb-1" style={{ color: t.muted }}>
                                     Mission (one line)
                                 </span>
                                 <input
@@ -515,7 +554,7 @@ export default function CommandCenter() {
                                 />
                             </label>
                             <label className="text-sm">
-                                <span className="block mb-1" style={{ color: MUTED }}>
+                                <span className="block mb-1" style={{ color: t.muted }}>
                                     Revenue target ($)
                                 </span>
                                 <input
@@ -528,7 +567,7 @@ export default function CommandCenter() {
                             </label>
                             <div className="grid grid-cols-2 gap-2">
                                 <label className="text-sm">
-                                    <span className="block mb-1" style={{ color: MUTED }}>
+                                    <span className="block mb-1" style={{ color: t.muted }}>
                                         Sprint start
                                     </span>
                                     <input
@@ -540,7 +579,7 @@ export default function CommandCenter() {
                                     />
                                 </label>
                                 <label className="text-sm">
-                                    <span className="block mb-1" style={{ color: MUTED }}>
+                                    <span className="block mb-1" style={{ color: t.muted }}>
                                         Sprint end
                                     </span>
                                     <input
@@ -553,7 +592,7 @@ export default function CommandCenter() {
                                 </label>
                             </div>
                             <div className="sm:col-span-2 flex justify-end">
-                                <button onClick={saveNorthStar} className="px-4 py-2 rounded-lg text-sm font-medium" style={{ backgroundColor: ORANGE, color: BG }}>
+                                <button onClick={saveNorthStar} className="px-4 py-2 rounded-lg text-sm font-medium" style={{ backgroundColor: ORANGE, color: theme === 'dark' ? '#15140F' : '#FFFFFF' }}>
                                     Save
                                 </button>
                             </div>
@@ -562,10 +601,10 @@ export default function CommandCenter() {
 
                     <div className="flex gap-1 mb-3">
                         {Array.from({ length: sprintLen }).map((_, i) => (
-                            <div key={i} className="h-2 flex-1 rounded-full" style={{ backgroundColor: i < dayIndex ? ORANGE : BORDER }} />
+                            <div key={i} className="h-2 flex-1 rounded-full" style={{ backgroundColor: i < dayIndex ? ORANGE : t.border }} />
                         ))}
                     </div>
-                    <div className="flex justify-between text-xs mb-5" style={{ color: MUTED }}>
+                    <div className="flex justify-between text-xs mb-5" style={{ color: t.muted }}>
                         <span>
                             Day {dayIndex} of {sprintLen}
                         </span>
@@ -574,13 +613,13 @@ export default function CommandCenter() {
                         </span>
                     </div>
 
-                    <div className="flex justify-between text-xs mb-1.5" style={{ color: MUTED }}>
+                    <div className="flex justify-between text-xs mb-1.5" style={{ color: t.muted }}>
                         <span>Revenue this sprint</span>
                         <span>
                             ${sprintRevenue.toLocaleString('en-US')} / ${Number(northStar.revenueTarget || 0).toLocaleString('en-US')}
                         </span>
                     </div>
-                    <div className="h-2.5 rounded-full overflow-hidden" style={{ backgroundColor: BORDER }}>
+                    <div className="h-2.5 rounded-full overflow-hidden" style={{ backgroundColor: t.border }}>
                         <div className="h-full rounded-full" style={{ width: `${revenuePct}%`, backgroundColor: ORANGE }} />
                     </div>
                 </div>
@@ -589,13 +628,13 @@ export default function CommandCenter() {
                     <Card
                         eyebrow="Today"
                         title="Priorities"
-                        action={savedTodayAt ? <span className="text-xs" style={{ color: FAINT }}>Saved {savedTodayAt}</span> : null}
+                        action={savedTodayAt ? <span className="text-xs" style={{ color: t.faint }}>Saved {savedTodayAt}</span> : null}
                     >
                         <div className="space-y-2 mb-3">
                             {visiblePriorities.map((p) => (
                                 <div key={p._idx} className="flex items-center gap-2 flex-wrap">
                                     <button onClick={() => updatePriority(p._idx, 'done', !p.done)}>
-                                        {p.done ? <CheckCircle2 size={18} style={{ color: ORANGE }} /> : <Circle size={18} style={{ color: FAINT }} />}
+                                        {p.done ? <CheckCircle2 size={18} style={{ color: ORANGE }} /> : <Circle size={18} style={{ color: t.faint }} />}
                                     </button>
                                     <input
                                         value={p.text}
@@ -603,26 +642,26 @@ export default function CommandCenter() {
                                         placeholder={p.carried ? 'Carried over from yesterday' : 'New priority'}
                                         className="flex-1 rounded-lg px-3 py-2 text-sm min-w-0"
                                         style={{
-                                            backgroundColor: BG,
-                                            color: p.done ? FAINT : TEXT,
-                                            border: p.carried ? `1px solid ${ORANGE}` : `1px solid ${BORDER}`,
+                                            backgroundColor: t.bg,
+                                            color: p.done ? t.faint : t.text,
+                                            border: p.carried ? `1px solid ${ORANGE}` : `1px solid ${t.border}`,
                                             textDecoration: p.done ? 'line-through' : 'none'
                                         }}
                                     />
                                     <button
                                         onClick={() => updatePriority(p._idx, 'owner', cycleOwner(p.owner || author))}
                                         className="text-xs px-2 py-1 rounded-full border flex-shrink-0"
-                                        style={{ borderColor: OWNER_COLORS[p.owner] || MUTED, color: OWNER_COLORS[p.owner] || MUTED }}
+                                        style={{ borderColor: OWNER_COLORS[p.owner] || t.muted, color: OWNER_COLORS[p.owner] || t.muted }}
                                     >
                                         {p.owner || 'Common'}
                                     </button>
                                     <button onClick={() => removePriorityRow(p._idx)}>
-                                        <X size={16} style={{ color: FAINT }} />
+                                        <X size={16} style={{ color: t.faint }} />
                                     </button>
                                 </div>
                             ))}
                         </div>
-                        <div className="text-xs mb-3" style={{ color: FAINT }}>
+                        <div className="text-xs mb-3" style={{ color: t.faint }}>
                             Tap the name pill to mark a priority Sangeet-only, Shivam-only, or Common. Common stays visible to both; the rest only shows on its owner's view.
                         </div>
                         {visiblePriorities.length < 3 && (
@@ -631,7 +670,7 @@ export default function CommandCenter() {
                             </button>
                         )}
                         <div className="mb-3">
-                            <span className="block text-xs mb-1" style={{ color: MUTED }}>
+                            <span className="block text-xs mb-1" style={{ color: t.muted }}>
                                 Shipped today (one per line)
                             </span>
                             <textarea
@@ -643,12 +682,12 @@ export default function CommandCenter() {
                             />
                         </div>
                         <div className="mb-4">
-                            <span className="block text-xs mb-1" style={{ color: MUTED }}>
+                            <span className="block text-xs mb-1" style={{ color: t.muted }}>
                                 One learning
                             </span>
                             <input value={draftLearning} onChange={(e) => setDraftLearning(e.target.value)} className="w-full rounded-lg px-3 py-2 text-sm" style={inputStyle()} />
                         </div>
-                        <button onClick={saveToday} className="px-4 py-2 rounded-lg text-sm font-medium" style={{ backgroundColor: ORANGE, color: BG }}>
+                        <button onClick={saveToday} className="px-4 py-2 rounded-lg text-sm font-medium" style={{ backgroundColor: ORANGE, color: theme === 'dark' ? '#15140F' : '#FFFFFF' }}>
                             Save today's log
                         </button>
                     </Card>
@@ -656,14 +695,14 @@ export default function CommandCenter() {
                     <Card eyebrow="Live" title="Tasks &amp; meetings">
                         <div className="mb-5">
                             <div className="flex items-center justify-between mb-2">
-                                <span className="text-sm font-medium" style={{ color: TEXT }}>
+                                <span className="text-sm font-medium" style={{ color: t.text }}>
                                     Linear tasks
                                 </span>
                                 <button
                                     onClick={syncTasks}
                                     disabled={tasksLoading}
                                     className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-full border"
-                                    style={{ borderColor: BORDER, color: GOLD }}
+                                    style={{ borderColor: t.border, color: GOLD }}
                                 >
                                     {tasksLoading ? <Loader2 size={12} className="animate-spin" /> : <RefreshCw size={12} />} Sync
                                 </button>
@@ -674,20 +713,20 @@ export default function CommandCenter() {
                                 </div>
                             )}
                             {tasks === null && !tasksError && (
-                                <div className="text-xs italic" style={{ color: FAINT }}>
+                                <div className="text-xs italic" style={{ color: t.faint }}>
                                     Not synced yet.
                                 </div>
                             )}
                             {tasks && tasks.length === 0 && !tasksError && (
-                                <div className="text-xs italic" style={{ color: FAINT }}>
+                                <div className="text-xs italic" style={{ color: t.faint }}>
                                     Nothing open. Clean board.
                                 </div>
                             )}
                             <div className="space-y-1.5">
                                 {(tasks || []).map((t, i) => (
-                                    <div key={i} className="text-sm flex items-center justify-between rounded-lg px-3 py-2" style={{ backgroundColor: BG }}>
-                                        <span style={{ color: TEXT }}>{t.title}</span>
-                                        <span className="text-xs" style={{ color: MUTED }}>
+                                    <div key={i} className="text-sm flex items-center justify-between rounded-lg px-3 py-2" style={{ backgroundColor: t.bg }}>
+                                        <span style={{ color: t.text }}>{t.title}</span>
+                                        <span className="text-xs" style={{ color: t.muted }}>
                                             {t.priority || t.status}
                                         </span>
                                     </div>
@@ -697,14 +736,14 @@ export default function CommandCenter() {
 
                         <div>
                             <div className="flex items-center justify-between mb-2">
-                                <span className="text-sm font-medium" style={{ color: TEXT }}>
+                                <span className="text-sm font-medium" style={{ color: t.text }}>
                                     Today's meetings
                                 </span>
                                 <button
                                     onClick={syncEvents}
                                     disabled={eventsLoading}
                                     className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-full border"
-                                    style={{ borderColor: BORDER, color: GOLD }}
+                                    style={{ borderColor: t.border, color: GOLD }}
                                 >
                                     {eventsLoading ? <Loader2 size={12} className="animate-spin" /> : <RefreshCw size={12} />} Sync
                                 </button>
@@ -715,37 +754,37 @@ export default function CommandCenter() {
                                 </div>
                             )}
                             {events === null && !eventsError && (
-                                <div className="text-xs italic" style={{ color: FAINT }}>
+                                <div className="text-xs italic" style={{ color: t.faint }}>
                                     Not synced yet.
                                 </div>
                             )}
                             {events && events.length === 0 && !eventsError && (
-                                <div className="text-xs italic" style={{ color: FAINT }}>
+                                <div className="text-xs italic" style={{ color: t.faint }}>
                                     Nothing on the calendar today.
                                 </div>
                             )}
                             <div className="space-y-1.5">
                                 {(events || []).map((ev, i) => (
-                                    <div key={i} className="text-sm flex items-center justify-between rounded-lg px-3 py-2" style={{ backgroundColor: BG }}>
-                                        <span style={{ color: TEXT }}>{ev.title}</span>
-                                        <span className="text-xs" style={{ color: MUTED }}>
+                                    <div key={i} className="text-sm flex items-center justify-between rounded-lg px-3 py-2" style={{ backgroundColor: t.bg }}>
+                                        <span style={{ color: t.text }}>{ev.title}</span>
+                                        <span className="text-xs" style={{ color: t.muted }}>
                                             {ev.start}
                                         </span>
                                     </div>
                                 ))}
                             </div>
                         </div>
-                        <div className="text-xs mt-3" style={{ color: FAINT }}>
+                        <div className="text-xs mt-3" style={{ color: t.faint }}>
                             Pulls from whoever's connectors are active when this is opened — each person sees their own Linear/Calendar.
                         </div>
                     </Card>
 
                     <Card eyebrow="Outreach" title="Email tracker">
                         <div className="flex items-center justify-between mb-2">
-                            <span className="text-sm font-medium" style={{ color: TEXT }}>
+                            <span className="text-sm font-medium" style={{ color: t.text }}>
                                 Sent today
                             </span>
-                            <div className="flex items-center gap-1 text-xs" style={{ color: MUTED }}>
+                            <div className="flex items-center gap-1 text-xs" style={{ color: t.muted }}>
                                 goal
                                 <input
                                     type="number"
@@ -760,11 +799,11 @@ export default function CommandCenter() {
                             <span className="text-3xl font-bold" style={{ color: ORANGE }}>
                                 {todaySent}
                             </span>
-                            <span className="text-sm" style={{ color: FAINT }}>
+                            <span className="text-sm" style={{ color: t.faint }}>
                                 / {emailGoal}
                             </span>
                             <div className="flex gap-1.5 ml-auto">
-                                <button onClick={() => adjustEmail('sent', -1)} className="w-7 h-7 rounded-full border text-sm" style={{ borderColor: BORDER, color: MUTED }}>
+                                <button onClick={() => adjustEmail('sent', -1)} className="w-7 h-7 rounded-full border text-sm" style={{ borderColor: t.border, color: t.muted }}>
                                     −
                                 </button>
                                 <button onClick={() => adjustEmail('sent', 1)} className="w-7 h-7 rounded-full border text-sm font-medium" style={{ borderColor: ORANGE, color: ORANGE }}>
@@ -775,7 +814,7 @@ export default function CommandCenter() {
                                 </button>
                             </div>
                         </div>
-                        <div className="h-2 rounded-full overflow-hidden mb-4" style={{ backgroundColor: BORDER }}>
+                        <div className="h-2 rounded-full overflow-hidden mb-4" style={{ backgroundColor: t.border }}>
                             <div className="h-full rounded-full" style={{ width: `${emailGoalPct}%`, backgroundColor: ORANGE }} />
                         </div>
 
@@ -785,15 +824,15 @@ export default function CommandCenter() {
                                 ['negative', 'Negative replies', WARN],
                                 ['meetings', 'Meetings booked', GOLD]
                             ].map(([field, label, color]) => (
-                                <div key={field} className="rounded-lg p-2 text-center" style={{ backgroundColor: BG }}>
-                                    <div className="text-xs mb-1" style={{ color: MUTED }}>
+                                <div key={field} className="rounded-lg p-2 text-center" style={{ backgroundColor: t.bg }}>
+                                    <div className="text-xs mb-1" style={{ color: t.muted }}>
                                         {label}
                                     </div>
                                     <div className="text-xl font-semibold mb-1.5" style={{ color }}>
                                         {todayEmailRecord ? todayEmailRecord[field] || 0 : 0}
                                     </div>
                                     <div className="flex justify-center gap-1.5">
-                                        <button onClick={() => adjustEmail(field, -1)} className="w-6 h-6 rounded-full border text-xs" style={{ borderColor: BORDER, color: MUTED }}>
+                                        <button onClick={() => adjustEmail(field, -1)} className="w-6 h-6 rounded-full border text-xs" style={{ borderColor: t.border, color: t.muted }}>
                                             −
                                         </button>
                                         <button onClick={() => adjustEmail(field, 1)} className="w-6 h-6 rounded-full border text-xs" style={{ borderColor: color, color }}>
@@ -808,28 +847,28 @@ export default function CommandCenter() {
                             <div style={{ height: 100 }} className="mb-4">
                                 <ResponsiveContainer width="100%" height="100%">
                                     <BarChart data={emailChartData}>
-                                        <CartesianGrid strokeDasharray="3 3" stroke={BORDER} vertical={false} />
-                                        <XAxis dataKey="date" stroke={FAINT} fontSize={11} tickLine={false} axisLine={false} />
+                                        <CartesianGrid strokeDasharray="3 3" stroke={t.border} vertical={false} />
+                                        <XAxis dataKey="date" stroke={t.faint} fontSize={11} tickLine={false} axisLine={false} />
                                         <YAxis hide />
-                                        <Tooltip contentStyle={{ backgroundColor: SURFACE, border: `1px solid ${BORDER}`, fontSize: 12 }} labelStyle={{ color: TEXT }} />
+                                        <Tooltip contentStyle={{ backgroundColor: t.surface, border: `1px solid ${t.border}`, fontSize: 12 }} labelStyle={{ color: t.text }} />
                                         <Bar dataKey="sent" fill={ORANGE} radius={[4, 4, 0, 0]} />
                                     </BarChart>
                                 </ResponsiveContainer>
                             </div>
                         )}
 
-                        <div className="grid grid-cols-2 gap-2 text-xs" style={{ color: MUTED }}>
+                        <div className="grid grid-cols-2 gap-2 text-xs" style={{ color: t.muted }}>
                             <div>
-                                All-time sent: <span style={{ color: TEXT }}>{totalSent}</span>
+                                All-time sent: <span style={{ color: t.text }}>{totalSent}</span>
                             </div>
                             <div>
-                                All-time meetings: <span style={{ color: TEXT }}>{totalMeetings}</span>
+                                All-time meetings: <span style={{ color: t.text }}>{totalMeetings}</span>
                             </div>
                             <div>
-                                Reply rate: <span style={{ color: TEXT }}>{replyRate}%</span>
+                                Reply rate: <span style={{ color: t.text }}>{replyRate}%</span>
                             </div>
                             <div>
-                                Positive rate: <span style={{ color: TEXT }}>{positiveRate}%</span>
+                                Positive rate: <span style={{ color: t.text }}>{positiveRate}%</span>
                             </div>
                         </div>
                     </Card>
@@ -839,10 +878,10 @@ export default function CommandCenter() {
                             <div style={{ height: 120 }} className="mb-4">
                                 <ResponsiveContainer width="100%" height="100%">
                                     <BarChart data={chartData}>
-                                        <CartesianGrid strokeDasharray="3 3" stroke={BORDER} vertical={false} />
-                                        <XAxis dataKey="date" stroke={FAINT} fontSize={11} tickLine={false} axisLine={false} />
+                                        <CartesianGrid strokeDasharray="3 3" stroke={t.border} vertical={false} />
+                                        <XAxis dataKey="date" stroke={t.faint} fontSize={11} tickLine={false} axisLine={false} />
                                         <YAxis hide />
-                                        <Tooltip contentStyle={{ backgroundColor: SURFACE, border: `1px solid ${BORDER}`, fontSize: 12 }} labelStyle={{ color: TEXT }} />
+                                        <Tooltip contentStyle={{ backgroundColor: t.surface, border: `1px solid ${t.border}`, fontSize: 12 }} labelStyle={{ color: t.text }} />
                                         <Bar dataKey="amount" fill={ORANGE} radius={[4, 4, 0, 0]} />
                                     </BarChart>
                                 </ResponsiveContainer>
@@ -866,7 +905,7 @@ export default function CommandCenter() {
                                 style={inputStyle()}
                             />
                         </div>
-                        <button onClick={addRevenue} className="flex items-center gap-1 text-sm px-4 py-2 rounded-lg font-medium mb-4" style={{ backgroundColor: ORANGE, color: BG }}>
+                        <button onClick={addRevenue} className="flex items-center gap-1 text-sm px-4 py-2 rounded-lg font-medium mb-4" style={{ backgroundColor: ORANGE, color: theme === 'dark' ? '#15140F' : '#FFFFFF' }}>
                             <Plus size={14} /> Log revenue
                         </button>
                         <div className="space-y-1.5 max-h-40 overflow-y-auto">
@@ -874,16 +913,16 @@ export default function CommandCenter() {
                                 .sort((a, b) => (a.date < b.date ? 1 : -1))
                                 .slice(0, 8)
                                 .map((r) => (
-                                    <div key={r.id} className="text-sm flex items-center justify-between gap-2 rounded-lg px-3 py-2" style={{ backgroundColor: BG }}>
-                                        <span style={{ color: MUTED }}>{r.date}</span>
-                                        <span className="flex-1 truncate" style={{ color: TEXT }}>
+                                    <div key={r.id} className="text-sm flex items-center justify-between gap-2 rounded-lg px-3 py-2" style={{ backgroundColor: t.bg }}>
+                                        <span style={{ color: t.muted }}>{r.date}</span>
+                                        <span className="flex-1 truncate" style={{ color: t.text }}>
                                             {r.source || '—'}
                                         </span>
                                         <span className="font-medium" style={{ color: ORANGE }}>
                                             ${Number(r.amount).toLocaleString('en-US')}
                                         </span>
                                         <button onClick={() => deleteRevenue(r.id)}>
-                                            <Trash2 size={14} style={{ color: FAINT }} />
+                                            <Trash2 size={14} style={{ color: t.faint }} />
                                         </button>
                                     </div>
                                 ))}
@@ -913,19 +952,19 @@ export default function CommandCenter() {
                                 </option>
                             ))}
                         </select>
-                        <button onClick={addCrm} className="flex items-center gap-1 text-sm px-4 py-2 rounded-lg font-medium mb-4" style={{ backgroundColor: ORANGE, color: BG }}>
+                        <button onClick={addCrm} className="flex items-center gap-1 text-sm px-4 py-2 rounded-lg font-medium mb-4" style={{ backgroundColor: ORANGE, color: theme === 'dark' ? '#15140F' : '#FFFFFF' }}>
                             <Plus size={14} /> Add to pipeline
                         </button>
                         <div className="space-y-1.5 max-h-52 overflow-y-auto">
                             {crm.map((c) => (
-                                <div key={c.id} className="rounded-lg px-3 py-2" style={{ backgroundColor: BG }}>
+                                <div key={c.id} className="rounded-lg px-3 py-2" style={{ backgroundColor: t.bg }}>
                                     <div className="flex items-center justify-between mb-1 gap-2">
-                                        <span className="text-sm font-medium truncate" style={{ color: TEXT }}>
+                                        <span className="text-sm font-medium truncate" style={{ color: t.text }}>
                                             {c.name}
                                             {c.company ? ` · ${c.company}` : ''}
                                         </span>
                                         <button onClick={() => deleteCrm(c.id)}>
-                                            <Trash2 size={14} style={{ color: FAINT }} />
+                                            <Trash2 size={14} style={{ color: t.faint }} />
                                         </button>
                                     </div>
                                     <div className="flex items-center justify-between gap-2">
@@ -933,7 +972,7 @@ export default function CommandCenter() {
                                             value={c.stage}
                                             onChange={(e) => updateCrmStage(c.id, e.target.value)}
                                             className="text-xs rounded-full px-2 py-1"
-                                            style={{ backgroundColor: SURFACE, color: STAGE_COLORS[c.stage], border: `1px solid ${STAGE_COLORS[c.stage]}` }}
+                                            style={{ backgroundColor: t.surface, color: STAGE_COLORS[c.stage], border: `1px solid ${STAGE_COLORS[c.stage]}` }}
                                         >
                                             {STAGES.map((s) => (
                                                 <option key={s} value={s}>
@@ -941,7 +980,7 @@ export default function CommandCenter() {
                                                 </option>
                                             ))}
                                         </select>
-                                        <span className="text-xs flex-shrink-0" style={{ color: FAINT }}>
+                                        <span className="text-xs flex-shrink-0" style={{ color: t.faint }}>
                                             last touch {c.lastContact}
                                         </span>
                                     </div>
@@ -951,7 +990,7 @@ export default function CommandCenter() {
                     </Card>
 
                     <Card eyebrow="Parking lot" title="Ideas &amp; opportunities">
-                        <div className="text-xs mb-3" style={{ color: FAINT }}>
+                        <div className="text-xs mb-3" style={{ color: t.faint }}>
                             Anything that pulls focus goes here first — not into today's priorities.
                         </div>
                         <div className="flex gap-2 mb-4">
@@ -963,26 +1002,26 @@ export default function CommandCenter() {
                                 style={inputStyle()}
                                 onKeyDown={(e) => e.key === 'Enter' && addIdea()}
                             />
-                            <button onClick={addIdea} className="px-3 py-2 rounded-lg" style={{ backgroundColor: ORANGE, color: BG }}>
+                            <button onClick={addIdea} className="px-3 py-2 rounded-lg" style={{ backgroundColor: ORANGE, color: theme === 'dark' ? '#15140F' : '#FFFFFF' }}>
                                 <Plus size={16} />
                             </button>
                         </div>
                         <div className="space-y-1.5 max-h-52 overflow-y-auto">
                             {ideas.map((idea) => (
-                                <div key={idea.id} className="rounded-lg px-3 py-2" style={{ backgroundColor: BG, opacity: idea.status === 'discarded' ? 0.5 : 1 }}>
+                                <div key={idea.id} className="rounded-lg px-3 py-2" style={{ backgroundColor: t.bg, opacity: idea.status === 'discarded' ? 0.5 : 1 }}>
                                     <div className="flex items-start justify-between gap-2">
                                         <span
                                             className="text-sm flex-1"
-                                            style={{ color: TEXT, textDecoration: idea.status === 'discarded' ? 'line-through' : 'none' }}
+                                            style={{ color: t.text, textDecoration: idea.status === 'discarded' ? 'line-through' : 'none' }}
                                         >
                                             {idea.idea}
                                         </span>
                                         <button onClick={() => deleteIdea(idea.id)}>
-                                            <Trash2 size={14} style={{ color: FAINT }} />
+                                            <Trash2 size={14} style={{ color: t.faint }} />
                                         </button>
                                     </div>
                                     <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                                        <span className="text-xs" style={{ color: FAINT }}>
+                                        <span className="text-xs" style={{ color: t.faint }}>
                                             {idea.author} · {idea.date}
                                         </span>
                                         <div className="flex gap-1 ml-auto">
@@ -991,7 +1030,7 @@ export default function CommandCenter() {
                                                     key={s}
                                                     onClick={() => setIdeaStatus(idea.id, s)}
                                                     className="text-xs px-2 py-0.5 rounded-full"
-                                                    style={idea.status === s ? { backgroundColor: ORANGE_SOFT, color: ORANGE } : { color: FAINT }}
+                                                    style={idea.status === s ? { backgroundColor: t.orangeSoft, color: ORANGE } : { color: t.faint }}
                                                 >
                                                     {s}
                                                 </button>
@@ -1004,7 +1043,7 @@ export default function CommandCenter() {
                     </Card>
 
                     <Card eyebrow="Reference" title="Document library">
-                        <div className="text-xs mb-3" style={{ color: FAINT }}>
+                        <div className="text-xs mb-3" style={{ color: t.faint }}>
                             Paste your Drive folder links once — everyone sees the same source of truth.
                         </div>
                         <div className="space-y-2">
@@ -1016,7 +1055,7 @@ export default function CommandCenter() {
                                 ['brainstorm', 'Founder brainstorm notes']
                             ].map(([key, label]) => (
                                 <div key={key}>
-                                    <span className="block text-xs mb-1" style={{ color: MUTED }}>
+                                    <span className="block text-xs mb-1" style={{ color: t.muted }}>
                                         {label}
                                     </span>
                                     <input
@@ -1032,19 +1071,19 @@ export default function CommandCenter() {
                     </Card>
                 </div>
 
-                <div className="mt-6 rounded-2xl p-5 sm:p-6 border" style={{ backgroundColor: SURFACE, borderColor: BORDER }}>
+                <div className="mt-6 rounded-2xl p-5 sm:p-6 border transition-all duration-200" style={{ backgroundColor: t.surface, borderColor: t.border }}>
                     <div className="text-xs tracking-widest uppercase mb-3" style={{ color: ORANGE }}>
                         Last 7 days
                     </div>
                     {recentHistory.length === 0 && (
-                        <div className="text-sm italic" style={{ color: FAINT }}>
+                        <div className="text-sm italic" style={{ color: t.faint }}>
                             Nothing logged yet — save today's log above to start the trail.
                         </div>
                     )}
                     <div className="space-y-3">
                         {recentHistory.map((d) => (
-                            <div key={d.date} className="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-4 pb-3 border-b" style={{ borderColor: BORDER }}>
-                                <div className="text-xs w-28 flex-shrink-0" style={{ color: MUTED }}>
+                            <div key={d.date} className="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-4 pb-3 border-b" style={{ borderColor: t.border }}>
+                                <div className="text-xs w-28 flex-shrink-0" style={{ color: t.muted }}>
                                     {d.date} · {d.author}
                                 </div>
                                 <div className="flex-1 text-sm">
@@ -1052,7 +1091,7 @@ export default function CommandCenter() {
                                         <span
                                             key={i}
                                             className="mr-3"
-                                            style={{ textDecoration: p.done ? 'line-through' : 'none', color: p.done ? FAINT : OWNER_COLORS[p.owner] || TEXT }}
+                                            style={{ textDecoration: p.done ? 'line-through' : 'none', color: p.done ? t.faint : OWNER_COLORS[p.owner] || t.text }}
                                         >
                                             {p.text}
                                         </span>
