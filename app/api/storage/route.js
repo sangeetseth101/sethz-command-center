@@ -1,21 +1,11 @@
 import { NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
-import { createClient } from '@supabase/supabase-js';
+import { kv } from '@vercel/kv';
 
 const dbPath = path.join(process.cwd(), 'data', 'db.json');
 
-const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-let supabase = null;
-if (supabaseUrl && supabaseKey) {
-  try {
-    supabase = createClient(supabaseUrl, supabaseKey);
-  } catch (e) {
-    console.error('Failed to initialize Supabase client:', e);
-  }
-}
+const hasKv = !!(process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN);
 
 function initLocalDb() {
   const dir = path.dirname(dbPath);
@@ -35,21 +25,14 @@ export async function GET(request) {
     return NextResponse.json({ error: 'Key parameter is required' }, { status: 400 });
   }
 
-  if (supabase) {
+  if (hasKv) {
     try {
-      const { data, error } = await supabase
-        .from('command_center_store')
-        .select('value')
-        .eq('key', key)
-        .single();
-      
-      if (error && error.code !== 'PGRST116') {
-        console.error('Supabase GET error:', error);
-      } else if (data) {
-        return NextResponse.json({ key, value: data.value });
+      const val = await kv.get(key);
+      if (val !== undefined && val !== null) {
+        return NextResponse.json({ key, value: val });
       }
     } catch (err) {
-      console.error('Supabase client exception:', err);
+      console.error('Vercel KV GET error:', err);
     }
   }
 
@@ -69,19 +52,12 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Key is required' }, { status: 400 });
     }
 
-    if (supabase) {
+    if (hasKv) {
       try {
-        const { error } = await supabase
-          .from('command_center_store')
-          .upsert({ key, value, updated_at: new Date().toISOString() });
-        
-        if (error) {
-          console.error('Supabase POST error:', error);
-        } else {
-          return NextResponse.json({ success: true, source: 'supabase' });
-        }
+        await kv.set(key, value);
+        return NextResponse.json({ success: true, source: 'vercel-kv' });
       } catch (err) {
-        console.error('Supabase client exception on POST:', err);
+        console.error('Vercel KV POST error:', err);
       }
     }
 
